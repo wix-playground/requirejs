@@ -1688,6 +1688,11 @@ var requirejs, require, define;
                 if (!hasPathFallback(data.id)) {
                     return onError(makeError('scripterror', 'Script error for: ' + data.id, evt, [data.id]));
                 }
+            },
+
+            checkLoaded: function () {
+                intakeDefines();
+                checkLoaded();
             }
         };
 
@@ -1760,7 +1765,11 @@ var requirejs, require, define;
      * @param  {Function} fn function to execute later.
      */
     req.nextTick = typeof setTimeout !== 'undefined' ? function (fn) {
-        setTimeout(fn, 4);
+        if(contexts._.config.sync) {
+            fn();
+        } else {
+            setTimeout(fn, 4);
+        }
     } : function (fn) { fn(); };
 
     /**
@@ -1924,6 +1933,10 @@ var requirejs, require, define;
                                 e,
                                 [moduleName]));
             }
+        } else if(req.fallbackLoader) {
+            req.fallbackLoader(context, moduleName, url, function () {
+                context.checkLoaded();
+            });
         }
     };
 
