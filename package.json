@@ -1,6 +1,18 @@
 {
-    "volo": {
-        "url": "https://raw.github.com/jrburke/requirejs/{version}/require.js"
+    "name": "wix-requirejs",
+    "version": "0.0.0",
+    "description": "Wix fork of the RequireJS project",
+    "main": "requirejs-node.js",
+    "scripts": {
     },
-    "main": "require.js"
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/wix/requirejs.git"
+    },
+    "authors": [
+        "core3 <core3@wix.com>"
+    ],
+    "license": "BSD-2-Clause",
+    "dependencies": {},
+    "devDependencies": {}
 }
