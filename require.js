@@ -36,7 +36,8 @@ var requirejs, require, define;
         contexts = {},
         cfg = {},
         globalDefQueue = [],
-        useInteractive = false;
+        useInteractive = false,
+        envOverrides = global.requirejsEnv || {};
 
     function isFunction(it) {
         return ostring.call(it) === '[object Function]';
@@ -1764,13 +1765,13 @@ var requirejs, require, define;
      * that have a better solution than setTimeout.
      * @param  {Function} fn function to execute later.
      */
-    req.nextTick = typeof setTimeout !== 'undefined' ? function (fn) {
+    req.nextTick = envOverrides.nextTick || function (fn) {
         if(contexts._.config.sync) {
             fn();
         } else {
             setTimeout(fn, 4);
         }
-    } : function (fn) { fn(); };
+    };
 
     /**
      * Export require as a global, but only if it does not already exist.
@@ -1933,7 +1934,7 @@ var requirejs, require, define;
                                 e,
                                 [moduleName]));
             }
-        } else if(req.fallbackLoader) {
+        } else if(envOverrides.fallbackLoader) {
             var localDefine = function () {
                 var argsArr = Array.prototype.slice.apply(arguments);
                 if (typeof argsArr[0] !== "string") {
@@ -1943,7 +1944,7 @@ var requirejs, require, define;
                 context.checkLoaded();
             };
             localDefine.amd = {};
-            req.fallbackLoader(moduleName, url, localDefine);
+            envOverrides.fallbackLoader(moduleName, url, localDefine);
         }
     };
 

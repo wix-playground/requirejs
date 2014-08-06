@@ -12,13 +12,22 @@
             "baseUrl": "http://localhost:9080/playground"
         });
 
-        define("testModule", "MrFunky");
 
-        console.time("benchmark");
-        requirejs(["testModule"], function (mrMonkey) {
-            console.timeEnd("benchmark");
-            console.log(mrMonkey);
-        });
+
+
+        setTimeout(function () {
+            requirejs([], function () {
+
+                define("testModule", "MrFunky");
+
+                console.time("benchmark");
+                require(["testModule"], function (mrMonkey) {
+                    console.timeEnd("benchmark");
+                    console.log(mrMonkey);
+                });
+            });
+        }, 500)
+
     </script>
 </body>
 </html>

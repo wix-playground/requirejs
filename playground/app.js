@@ -6,6 +6,17 @@ requirejs.config({
     "sync": true
 });
 
-requirejs(["testModule"], function (mrMonkey) {
-    debugger;
+requirejs.define("testModule", "MMMMM");
+
+requirejs([], function () {
+    var t0 = process.hrtime();
+    requirejs.require(["testModule"], function (mrMonkey) {
+        var t1 = process.hrtime(t0);
+        console.log(t1[1] / 1e6);
+        debugger;
+    });
+
+
 });
+
+
