@@ -14,5 +14,6 @@
     ],
     "license": "BSD-2-Clause",
     "dependencies": {},
-    "devDependencies": {}
+    "devDependencies": {},
+    "private": true
 }
