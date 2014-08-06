@@ -1934,9 +1934,16 @@ var requirejs, require, define;
                                 [moduleName]));
             }
         } else if(req.fallbackLoader) {
-            req.fallbackLoader(context, moduleName, url, function () {
+            var localDefine = function () {
+                var argsArr = Array.prototype.slice.apply(arguments);
+                if (typeof argsArr[0] !== "string") {
+                    argsArr.unshift(moduleName);
+                }
+                define.apply(global, argsArr);
                 context.checkLoaded();
-            });
+            };
+            localDefine.amd = {};
+            req.fallbackLoader(moduleName, url, localDefine);
         }
     };
 

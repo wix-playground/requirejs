@@ -1,10 +1,11 @@
 var requirejs = require("../requirejs-node");
 
 
-requirejs.requirejs.config({
-    "baseUrl": "http://localhost:9080/playground"
+requirejs.config({
+    "baseUrl": "http://localhost:9080/playground",
+    "sync": true
 });
 
-requirejs.requirejs(["testModule"], function (mrMonkey) {
+requirejs(["testModule"], function (mrMonkey) {
     debugger;
 });

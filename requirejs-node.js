@@ -3,40 +3,29 @@ var fs = require("fs");
 var http = require("http");
 var vm = require("vm");
 
-var requireAPI = {};
-
-function executeModule(moduleName, moduleContent) {
-    var scriptContext = vm.createContext({
-        "define": function () {
-            var argsArr = Array.prototype.slice.apply(arguments);
-            if(typeof argsArr[0] !== "string") {
-                argsArr.unshift(moduleName);
-            }
-            requireAPI.define.apply(requireAPI.requirejs, argsArr);
-        }
-    });
-    vm.runInContext(moduleContent, scriptContext, moduleName);
-}
-
-function nodeLoader (context, moduleName, url, done) {
+function nodeLoader (moduleName, url, define) {
     http.get(url, function (res) {
         var body = '';
         res.on('data', function(chunk) {
             body += chunk;
         });
         res.on('end', function() {
-            executeModule(moduleName, body);
-            done();
+            vm.runInContext(body, vm.createContext({ define: define }), moduleName);
+        });
+        res.on('error', function (err) {
+            throw err;
         });
     });
 }
 
+// require.js doesn't have any NodeJS/CommonJS-specific code, so we can't require() it.
+// Also, we want to add the 'fallbackLoader' hook to it before exporting it.
 var context = vm.createContext({});
 vm.runInContext(fs.readFileSync(path.resolve(__dirname, "require.js")), context);
 
+var requirejs = context.requirejs;
+requirejs.require = context.require;
+requirejs.define = context.define;
+requirejs.fallbackLoader = nodeLoader;
 
-requireAPI.requirejs = context.requirejs;
-requireAPI.requirejs.fallbackLoader = nodeLoader;
-requireAPI.require = context.require;
-requireAPI.define = context.define;
-module.exports = requireAPI;
+module.exports = requirejs;
