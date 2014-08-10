@@ -47,15 +47,20 @@ function loadModuleFromHttp_debug(moduleName, url, define) {
         }
     }
 
-    global.define = function () {
-        var args = Array.prototype.slice.apply(arguments);
-        if(typeof args[0] !== "string") {
-            args.unshift(moduleName);
-        }
-        define.apply(null, args);
-    };
-    require(tryFileName("libs") || tryFileName("repo-target"));
-    delete global.define;
+    var fileName = tryFileName("libs") || tryFileName("repo-target");
+    if(fileName) {
+        global.define = function () {
+            var args = Array.prototype.slice.apply(arguments);
+            if(typeof args[0] !== "string") {
+                args.unshift(moduleName);
+            }
+            define.apply(null, args);
+        };
+        require(fileName)
+        delete global.define;
+    } else {
+        loadModuleFromHttp(moduleName, url, define);
+    }
 }
 
 
