@@ -16,8 +16,13 @@ function loadModuleFromHttp(moduleName, url, define) {
         });
         res.on('end', function() {
             try {
-                global.define = define;
-                vm.runInContext(body, vm.createContext(global), moduleName);
+                var context = {
+                    define: define,
+                    setTimeout: setTimeout,
+                    console: console
+                };
+                context.define.amd = {};
+                vm.runInContext(body, vm.createContext(context), moduleName);
             }catch(err) {
                 console.error("Error while evaluating module " + moduleName + "(" + url + ")");
             }
@@ -65,7 +70,7 @@ function moduleLoader (moduleName, url, define) {
         } else {
             loadModuleFromHttp(moduleName, url, define);
         }
-    } else if(url.charAt(0) == "/"){
+    } else {
         define(moduleName, function () {
             return require(moduleName);
         });
