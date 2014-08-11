@@ -4,10 +4,6 @@ var http = require("http");
 var vm = require("vm");
 
 
-var debugMode = process.execArgv.some(function (arg) {
-    return (arg.indexOf("--debug-brk") === 0);
-});
-
 function loadModuleFromHttp(moduleName, url, define) {
     http.get(url, function (res) {
         var body = '';
@@ -16,15 +12,11 @@ function loadModuleFromHttp(moduleName, url, define) {
         });
         res.on('end', function() {
             try {
-                var context = {
-                    define: define,
-                    setTimeout: setTimeout,
-                    console: console
-                };
-                context.define.amd = {};
-                vm.runInContext(body, vm.createContext(context), moduleName);
+                requirejs.sandboxGlobals.define = define;
+                vm.runInContext(body, vm.createContext(requirejs.sandboxGlobals), moduleName);
             }catch(err) {
                 console.error("Error while evaluating module " + moduleName + "(" + url + ")");
+                console.log(err.stack)
             }
         });
         res.on('error', function (err) {
@@ -33,52 +25,30 @@ function loadModuleFromHttp(moduleName, url, define) {
     });
 }
 
-
-// This is a temporary support for the "debug" mode
-// When the node runs in the debugging mode (--debug-brk), remote modules will be loaded through Node's require()
-// and not through eval of the code text
-function loadModuleFromHttp_debug(moduleName, url, define) {
-    function tryFileName(root) {
-        var filename = path.resolve(process.cwd(), root, moduleName);
-        if(fs.existsSync(filename + ".js")) {
-            return filename;
-        } else {
-            return null;
+function moduleLoader (moduleName, url, define) {
+    if(url.slice(0,5) === "http:") {
+        loadModuleFromHttp(moduleName, url, define);
+    } else {
+        if(moduleName.indexOf("/") === -1) {
+            url = moduleName;
         }
-    }
-
-    var fileName = tryFileName("libs") || tryFileName("repo-target");
-    if(fileName) {
+        var defineWasCalled = false;
         global.define = function () {
+            defineWasCalled = true;
             var args = Array.prototype.slice.apply(arguments);
             if(typeof args[0] !== "string") {
                 args.unshift(moduleName);
             }
             define.apply(null, args);
         };
-        require(fileName)
-        delete global.define;
-    } else {
-        loadModuleFromHttp(moduleName, url, define);
-    }
-}
-
-
-
-function moduleLoader (moduleName, url, define) {
-    if(debugMode) {
-        console.log("REQUIRING", moduleName, url);
-    }
-    if(url.slice(0,5) === "http:") {
-        if(debugMode) {
-            loadModuleFromHttp_debug(moduleName, url, define);
-        } else {
-            loadModuleFromHttp(moduleName, url, define);
+        var result = require(url);
+        if(result && !defineWasCalled) {
+            define(moduleName, function () {
+                return result;
+            });
         }
-    } else {
-        define(moduleName, function () {
-            return require(moduleName);
-        });
+        delete global.define;
+
     }
 }
 
@@ -96,4 +66,11 @@ vm.runInContext(fs.readFileSync(path.resolve(__dirname, "require.js")), context)
 var requirejs = context.requirejs;
 requirejs.require = context.require;
 requirejs.define = context.define;
+requirejs.define.amd = {};
+
+requirejs.sandboxGlobals = {
+    define: requirejs.define,
+    setTimeout: setTimeout,
+    console: console
+};
 module.exports = requirejs;
