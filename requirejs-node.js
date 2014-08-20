@@ -53,7 +53,7 @@ function moduleLoader (moduleName, url, define) {
             } else {
                 try {
                     requirejs.sandboxGlobals.define = define;
-                    vm.runInContext(body, vm.createContext(requirejs.sandboxGlobals), moduleName);
+                    vm.runInContext(result, vm.createContext(requirejs.sandboxGlobals), moduleName);
                 } catch(err) {
                     console.error("Error while evaluating module " + moduleName + "(" + url + ")");
                     console.log(err.stack);
