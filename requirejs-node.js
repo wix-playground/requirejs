@@ -67,11 +67,7 @@ function moduleLoader (moduleName, url, define) {
         var defineWasCalled = false;
         global.define = function () {
             defineWasCalled = true;
-            var args = Array.prototype.slice.apply(arguments);
-            if(typeof args[0] !== "string") {
-                args.unshift(moduleName);
-            }
-            define.apply(null, args);
+            define.apply(null, arguments);
         };
         var result = require(url);
         if(result && !defineWasCalled) {

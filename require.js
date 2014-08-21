@@ -1689,11 +1689,6 @@ var requirejs, require, define;
                 if (!hasPathFallback(data.id)) {
                     return onError(makeError('scripterror', 'Script error for: ' + data.id, evt, [data.id]));
                 }
-            },
-
-            checkLoaded: function () {
-                intakeDefines();
-                checkLoaded();
             }
         };
 
@@ -1936,12 +1931,8 @@ var requirejs, require, define;
             }
         } else if(envOverrides.fallbackLoader) {
             var localDefine = function () {
-                var argsArr = Array.prototype.slice.apply(arguments);
-                if (typeof argsArr[0] !== "string") {
-                    argsArr.unshift(moduleName);
-                }
-                define.apply(global, argsArr);
-                context.checkLoaded();
+                define.apply(global, arguments);
+                context.completeLoad(moduleName);
             };
             localDefine.amd = {};
             envOverrides.fallbackLoader(moduleName, url, localDefine);
