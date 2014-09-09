@@ -2,16 +2,21 @@ var path = require("path");
 var fs = require("fs");
 var http = require("http");
 var vm = require("vm");
+var urlUtils = require("url");
 
 
 function loadModuleFromHttp(moduleName, url, callback) {
-    http.get(url, function (res) {
+    var requestOptions = urlUtils.parse(url);
+    requestOptions.headers = {
+        "x-wix-source-url" : "*"
+    };
+    http.get(requestOptions, function (res) {
         var body = '';
         res.on('data', function (chunk) {
             body += chunk;
         });
         res.on('end', function () {
-            callback(null, body);
+            callback(null, body, res);
         });
         res.on('error', function (err) {
             callback(err);
@@ -46,15 +51,14 @@ function textPlugin() {
 }
 
 function moduleLoader(moduleName, url, define) {
-    loadModuleFromHttp(moduleName, url, function (err, result) {
+    loadModuleFromHttp(moduleName, url, function (err, result, res) {
         if (err) {
             throw err;
         } else {
             try {
                 requirejs.sandboxGlobals.define = define;
-                var match = /\/\/# sourceURL=(.*)/g.exec(result);
-                var fileName = match ? match[1] : moduleName;
-                vm.runInContext(result, vm.createContext(requirejs.sandboxGlobals), fileName);
+                var sourceURL = res.headers["x-wix-source-url"];
+                vm.runInContext(result, vm.createContext(requirejs.sandboxGlobals), sourceURL || moduleName);
             } catch (err) {
                 console.error("Error while evaluating module " + moduleName + "(" + url + ")");
                 console.log(err.stack);
