@@ -7,10 +7,10 @@ var vm = require("vm");
 function loadModuleFromHttp(moduleName, url, callback) {
     http.get(url, function (res) {
         var body = '';
-        res.on('data', function(chunk) {
+        res.on('data', function (chunk) {
             body += chunk;
         });
-        res.on('end', function() {
+        res.on('end', function () {
             callback(null, body);
         });
         res.on('error', function (err) {
@@ -30,7 +30,7 @@ function textPlugin() {
                     loadModuleFromHttp(moduleName, url, callback);
                 }
             } else {
-                loader = function(callback) {
+                loader = function (callback) {
                     fs.readFile(url, callback);
                 }
             }
@@ -45,39 +45,23 @@ function textPlugin() {
     }
 }
 
-function moduleLoader (moduleName, url, define) {
-    if(url.slice(0,5) === "http:") {
-        loadModuleFromHttp(moduleName, url, function (err, result) {
-            if(err) {
-                throw err;
-            } else {
-                try {
-                    requirejs.sandboxGlobals.define = define;
-                    vm.runInContext(result, vm.createContext(requirejs.sandboxGlobals), moduleName);
-                } catch(err) {
-                    console.error("Error while evaluating module " + moduleName + "(" + url + ")");
-                    console.log(err.stack);
-                }
+function moduleLoader(moduleName, url, define) {
+    loadModuleFromHttp(moduleName, url, function (err, result) {
+        if (err) {
+            throw err;
+        } else {
+            try {
+                requirejs.sandboxGlobals.define = define;
+                var match = /\/\/# sourceURL=(.*)/g.exec(result);
+                var fileName = match ? match[1] : moduleName;
+                vm.runInContext(result, vm.createContext(requirejs.sandboxGlobals), fileName);
+            } catch (err) {
+                console.error("Error while evaluating module " + moduleName + "(" + url + ")");
+                console.log(err.stack);
             }
-        });
-    } else {
-        if(moduleName.indexOf("/") === -1) {
-            url = moduleName;
         }
-        var defineWasCalled = false;
-        global.define = function () {
-            defineWasCalled = true;
-            define.apply(null, arguments);
-        };
-        var result = require(url);
-        if(result && !defineWasCalled) {
-            define(moduleName, function () {
-                return result;
-            });
-        }
-        delete global.define;
+    });
 
-    }
 }
 
 // require.js doesn't have any NodeJS/CommonJS-specific code, so we can't require() it.
