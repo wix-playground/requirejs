@@ -8,19 +8,24 @@ var urlUtils = require("url");
 function loadModuleFromHttp(moduleName, url, callback) {
     var requestOptions = urlUtils.parse(url);
     requestOptions.headers = {
-        "x-wix-source-url" : "*"
+        "x-wix-source-url" : "*",
+        "Accept": "application/javascript"
     };
     http.get(requestOptions, function (res) {
-        var body = '';
-        res.on('data', function (chunk) {
-            body += chunk;
-        });
-        res.on('end', function () {
-            callback(null, body, res);
-        });
-        res.on('error', function (err) {
-            callback(err);
-        });
+        if(res.statusCode>=400) {
+            callback('HTTP Error ' + res.statusCode + ' while retrieving ' + url);
+        } else {
+            var body = '';
+            res.on('data', function (chunk) {
+                body += chunk;
+            });
+            res.on('end', function () {
+                callback(null, body, res);
+            });
+            res.on('error', function (err) {
+                callback(err);
+            });
+        }
     });
 }
 
@@ -70,7 +75,7 @@ function moduleLoader(moduleName, url, define) {
 
 // require.js doesn't have any NodeJS/CommonJS-specific code, so we can't require() it.
 // Also, we want to add the 'fallbackLoader' hook to it before exporting it.
-var context = vm.createContext(global);
+var context = vm.createContext();
 
 context.requirejsEnv = {
     nextTick: process.nextTick,
